@@ -1,4 +1,4 @@
-package ing.assessment.dto.Product;
+package ing.assessment.dto.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

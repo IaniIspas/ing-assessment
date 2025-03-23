@@ -1,4 +1,4 @@
-package ing.assessment.dto.Order;
+package ing.assessment.dto.order;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

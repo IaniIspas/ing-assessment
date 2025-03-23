@@ -1,7 +1,7 @@
 package ing.assessment.controller;
 
-import ing.assessment.dto.Order.OrderRequestDto;
-import ing.assessment.dto.Order.OrderResponseDto;
+import ing.assessment.dto.order.OrderRequestDto;
+import ing.assessment.dto.order.OrderResponseDto;
 import ing.assessment.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

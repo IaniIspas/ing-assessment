@@ -12,5 +12,5 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, ProductCK> {
     List<Product> findByProductCk_Id(Integer id);
-    Optional<Product> findByProductCk_IdAndProductCk_Location(Integer id, Location location);
+    Optional<Product> findByProductCkIdAndProductCkLocation(Integer id, Location location);
 }

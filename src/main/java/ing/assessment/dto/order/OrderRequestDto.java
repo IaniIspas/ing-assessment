@@ -1,6 +1,6 @@
-package ing.assessment.dto.Order;
+package ing.assessment.dto.order;
 
-import ing.assessment.dto.Product.ProductRequestDto;
+import ing.assessment.dto.product.ProductRequestDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
