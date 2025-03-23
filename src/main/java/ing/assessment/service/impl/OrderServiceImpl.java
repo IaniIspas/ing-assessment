@@ -14,6 +14,7 @@ import ing.assessment.exception.OutOfStockException;
 import ing.assessment.exception.ProductNotFoundException;
 import ing.assessment.model.Location;
 import ing.assessment.service.OrderService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,12 +28,34 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
 
     @Override
+    @Transactional
     public OrderResponseDto createOrder(OrderRequestDto orderRequestDto) {
         if (orderRequestDto.getProducts() == null || orderRequestDto.getProducts().isEmpty()) {
             throw new InvalidOrderException();
         }
+
         List<OrderProduct> orderProducts = new ArrayList<>();
         Set<Location> locations = new HashSet<>();
+
+        double productsTotalCost = processProducts(orderRequestDto, orderProducts, locations);
+
+        int deliveryCost = calculateDeliveryCost(productsTotalCost);
+        double finalCost = calculateFinalCost(productsTotalCost);
+
+        int deliveryTime = calculateDeliveryTime(locations);
+
+        Order order = new Order();
+        order.setTimestamp(new Date());
+        order.setOrderProducts(orderProducts);
+        order.setOrderCost(finalCost);
+        order.setDeliveryCost(deliveryCost);
+        order.setDeliveryTime(deliveryTime);
+        orderRepository.save(order);
+
+        return new OrderResponseDto(finalCost, deliveryCost, deliveryTime);
+    }
+
+    private double processProducts(OrderRequestDto orderRequestDto, List<OrderProduct> orderProducts, Set<Location> locations) {
         double productsTotalCost = 0.0;
 
         for (ProductRequestDto productRequest : orderRequestDto.getProducts()) {
@@ -57,30 +80,28 @@ public class OrderServiceImpl implements OrderService {
             );
             orderProducts.add(orderProduct);
         }
+        return productsTotalCost;
+    }
 
-        double finalCost;
-        int deliveryCost;
-        if (productsTotalCost > OrderConstants.DISCOUNT_THRESHOLD) {
-            deliveryCost = 0;
-            finalCost = productsTotalCost * OrderConstants.DISCOUNT_RATE;
-        } else if (productsTotalCost > OrderConstants.FREE_DELIVERY_THRESHOLD) {
-            deliveryCost = 0;
-            finalCost = productsTotalCost;
+    private int calculateDeliveryCost(double productsTotalCost) {
+        if (productsTotalCost > OrderConstants.FREE_DELIVERY_THRESHOLD) {
+            return 0;
         } else {
-            deliveryCost = OrderConstants.DEFAULT_DELIVERY_COST;
-            finalCost = productsTotalCost + deliveryCost;
+            return OrderConstants.DEFAULT_DELIVERY_COST;
         }
+    }
 
-        int deliveryTime = OrderConstants.DEFAULT_DELIVERY_TIME + ((locations.size() - 1) * 2);
+    private double calculateFinalCost(double productsTotalCost) {
+        if (productsTotalCost > OrderConstants.DISCOUNT_THRESHOLD) {
+            return productsTotalCost * OrderConstants.DISCOUNT_RATE;
+        } else if (productsTotalCost > OrderConstants.FREE_DELIVERY_THRESHOLD) {
+            return productsTotalCost;
+        } else {
+            return productsTotalCost + OrderConstants.DEFAULT_DELIVERY_COST;
+        }
+    }
 
-        Order order = new Order();
-        order.setTimestamp(new Date());
-        order.setOrderProducts(orderProducts);
-        order.setOrderCost(finalCost);
-        order.setDeliveryCost(deliveryCost);
-        order.setDeliveryTime(deliveryTime);
-        orderRepository.save(order);
-
-        return new OrderResponseDto(finalCost, deliveryCost, deliveryTime);
+    private int calculateDeliveryTime(Set<Location> locations) {
+        return OrderConstants.DEFAULT_DELIVERY_TIME + ((locations.size() - 1) * 2);
     }
 }
